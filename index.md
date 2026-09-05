@@ -3,10 +3,10 @@ layout: home
 
 hero:
   name: EvoSynth
-  text: Dynamic Meta-Optimizer for Automated Machine Learning
+  text: Dynamic Meta-Optimizer for AutoML
   tagline: Multi-Armed Bandit strategy selection with cooperative co-evolution, real-time telemetry, and a universal latent space for mixed-type hyperparameter tuning.
   image:
-    src: /evosynth_hero.jpg
+    src: /evo.png
     alt: EvoSynth Neural and DNA graphic
   actions:
     - theme: brand
@@ -17,7 +17,7 @@ hero:
       link: /algorithms/genetic-algorithm
     - theme: alt
       text: GitHub
-      link: https://github.com/paarthureddy/EvoSynth
+      link: https://github.com/EVOSYNTH-2027
 
 features:
   - title: UCB1 Multi-Armed Bandit
