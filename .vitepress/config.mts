@@ -4,6 +4,7 @@ export default defineConfig({
   title: "EvoSynth",
   description:
     "A Dynamic Multi-Armed Bandit Meta-Optimizer for Automated Machine Learning",
+  base: "/evosynth-docs/",
 
   head: [
     ["link", { rel: "icon", type: "image/svg+xml", href: "/favicon.svg" }],
