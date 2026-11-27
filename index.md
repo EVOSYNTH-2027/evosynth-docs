@@ -29,7 +29,7 @@ features:
     link: /concepts/latent-space
     linkText: Learn more
   - title: Cooperative Co-evolution
-    details: Structures the population into competing Tier 1 islands and a Tier 2 working pool. Elite individuals are periodically shared between islands to prevent genetic stagnation.
+    details: Four algorithms compete on equal Tier 1 islands; the best two are promoted to larger Tier 2 islands that trade their elite individuals, with SWAPs, rollbacks and diversity injection to prevent stagnation.
     link: /concepts/cooperative-coevolution
     linkText: Learn more
   - title: 4 Optimization Algorithms
@@ -41,7 +41,7 @@ features:
     link: /dashboard/overview
     linkText: View dashboard
   - title: Extensible Architecture
-    details: Add new optimization algorithms, swap the ML evaluator (XGBoost, Random Forest, Neural Networks), or distribute evaluations across cloud workers with minimal code changes.
+    details: Add new optimization algorithms or swap the ML evaluator (gradient boosting, random forests, neural networks) with minimal code changes; evaluations run in parallel threads.
     link: /developer/adding-optimizer
     linkText: Developer guide
 ---

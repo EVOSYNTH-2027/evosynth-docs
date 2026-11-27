@@ -17,6 +17,6 @@ When running a 10-hour hyperparameter search, printing `Iteration 500/2000...` t
 1. Is the model actively improving, or has it stagnated?
 2. Which algorithm is currently winning the Multi-Armed Bandit competition?
 3. Is CMA-ES actually finding better solutions than GA, or did GA get lucky early on?
-4. What is the current configuration of the XGBoost model?
+4. Which model family and configuration is currently the best?
 
 The dashboard answers all of these questions instantaneously without pausing or slowing down the Python engine.

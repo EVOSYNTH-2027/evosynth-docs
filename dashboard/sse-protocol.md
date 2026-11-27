@@ -6,59 +6,50 @@ Unlike WebSockets, which are bi-directional and complex to manage, SSE operates 
 
 ## The Event Lifecycle
 
-1. **Python `sys.stdout` Interception:** The `EventReporter` class in the Meta-Engine redirects `stdout`. Whenever the engine prints a log, the reporter parses it to see if it contains a parseable event (like `[EVENT]`).
-2. **FastAPI `POST /event`:** If an event is found, a daemon thread fires an HTTP POST request containing a JSON payload to the FastAPI server.
+1. **Engine events:** As the Meta-Engine works, the `EventReporter` turns each decision and score into a small JSON event (`reporter.emit(type, data)`). Every event is also appended to the run folder's `events.jsonl`, so a run can be inspected afterwards without the dashboard.
+2. **FastAPI `POST /event`:** If the telemetry server is reachable (the reporter re-checks periodically, so the server can be started mid-run), a daemon thread POSTs the event to it without blocking the search.
 3. **Asyncio Queue:** FastAPI receives the POST and pushes the JSON string into an `asyncio.Queue`.
-4. **SSE `GET /stream` Generator:** A background async generator infinitely yields data from the queue to connected HTTP clients using the `text/event-stream` format.
+4. **SSE `GET /stream` Generator:** A background async generator yields data from the queue to connected HTTP clients using the `text/event-stream` format.
 
 ## Event Payloads
 
-The React dashboard expects JSON payloads with the following structure:
+Every event has a `type` and a `data` object.
 
-### Initialization Event
-Fired when the engine boots. Contains the budget and search space definitions.
+### `step`
+Fired when the engine enters a new stage (search-space definition, initial population, tier split, Tier 1 competition, promotion, Tier 2 loop).
 ```json
-{
-  "type": "init",
-  "data": {
-    "dimensions": 7,
-    "budget": 2000,
-    "algorithms": ["GA", "PSO", "DE", "CMAES"]
-  }
-}
+{ "type": "step", "data": { "num": 2, "name": "Tier Split (4-Way)" } }
 ```
 
-### Iteration Tick
-Fired every $K$ evaluations. Updates the charts and tier statuses.
+### `progress`
+The evaluation budget used so far.
 ```json
-{
-  "type": "tick",
-  "data": {
-    "iteration": 5,
-    "global_best": 98.07,
-    "algorithms": {
-      "GA": { "best": 97.89, "ucb_score": 0.5 },
-      "CMAES": { "best": 98.42, "ucb_score": 0.95 }
-    },
-    "tier1": ["GA", "PSO"],
-    "tier2": ["DE", "CMAES"]
-  }
-}
+{ "type": "progress", "data": { "evals": 120, "budget": 500 } }
 ```
 
-### Final Result
-Fired when the budget is exhausted.
+### `metric`
+Fired whenever an algorithm finds a new best score.
 ```json
-{
-  "type": "finish",
-  "data": {
-    "winning_algorithm": "DE",
-    "final_accuracy": 98.59,
-    "best_params": {
-      "learning_rate": 0.1704,
-      "max_depth": 9,
-      ...
-    }
-  }
-}
+{ "type": "metric", "data": { "algo": "PSO", "accuracy": 86.42 } }
 ```
+
+### `composite`
+One per island at every scoring call: its UCB score and diversity.
+```json
+{ "type": "composite", "data": { "algo": "T1_PSO", "composite": 0.721, "diversity": 0.337 } }
+```
+
+### `tier_state`
+Which algorithms are in which tier, after every promotion, SWAP or rollback.
+```json
+{ "type": "tier_state", "data": { "T1": ["DE", "GA"], "T2": ["PSO", "CMAES"] } }
+```
+
+### `switch`
+A meta-controller intervention: `Promotion`, `Swap`, `Rollback`, `Injection` or `Elite Sharing`.
+```json
+{ "type": "switch", "data": { "action": "Injection", "algo": "T2_GA", "details": "Replaced bottom 3 due to stagnation" } }
+```
+
+### `log`
+Lines of the engine's console output, for the dashboard's log panel.

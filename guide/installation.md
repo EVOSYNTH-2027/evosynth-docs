@@ -1,17 +1,17 @@
 # Installation & Setup
 
-Running EvoSynth requires booting three separate components: the ML backend engine, the telemetry API server, and the React frontend dashboard.
+Running the full EvoSynth suite involves three components: the ML engine (the `evosynth` command), the telemetry API server, and the React frontend dashboard. The engine also runs on its own; the server and dashboard are only needed for live monitoring.
 
 ## Prerequisites
 
-- **Python 3.9+** (For the machine learning engine)
-- **Node.js 18+** (For the Vite/React dashboard)
+- **Python 3.11+** (developed and tested on Python 3.14)
+- **Node.js 18+** (for the Vite/React dashboard)
 
 ---
 
-## 1. Install Backend Dependencies
+## 1. Install the EvoSynth Package
 
-Navigate to the root of the `EvoSynth` directory and install the required Python packages. We highly recommend using a virtual environment.
+Navigate to the root of the `EvoSynth` directory and install the package. We highly recommend using a virtual environment.
 
 ```bash
 cd EvoSynth
@@ -24,11 +24,17 @@ source venv/bin/activate
 # Activate it (Windows)
 # venv\Scripts\activate
 
-# Install requirements
-pip install -r requirements.txt
+# Install EvoSynth with all extras (NAS, baselines, tests)
+pip install -e ".[all]"
 ```
 
-*(Note: Ensure your `requirements.txt` contains `fastapi`, `uvicorn`, `xgboost`, `scikit-learn`, `ConfigSpace`, `numpy`, `cma`, and `requests`.)*
+This installs the `evosynth` command (also runnable as `python -m evosynth`). All dependencies are pinned in `pyproject.toml`.
+
+Datasets are downloaded on first use into `.data/`, or all at once:
+```bash
+evosynth datasets download   # Covertype, HIGGS, Adult, Airlines, Poker Hand, MiniBooNE, Jannis, Fashion-MNIST
+evosynth datasets list       # what is registered and cached
+```
 
 ## 2. Install Frontend Dependencies
 
@@ -43,16 +49,16 @@ npm install
 
 ## Running the Suite
 
-Because the backend engine explicitly checks if the telemetry server is alive before it starts broadcasting, **you must start the API server first**.
+The engine checks whether the telemetry server is reachable and keeps checking during the run, so the server can be started before or after the engine. Start it first if you want to see the run from its first step.
 
 ### Terminal 1: The API Server
 This acts as the Server-Sent Events (SSE) router.
 ```bash
 cd EvoSynth
 source venv/bin/activate
-python api_server.py
+evosynth serve
 ```
-*Expected Output: `Starting API Server on http://localhost:8000`*
+*The server listens on `http://localhost:8000` by default (`settings/telemetry.toml`).*
 
 ### Terminal 2: The Telemetry Dashboard
 This boots the React UI.
@@ -60,14 +66,17 @@ This boots the React UI.
 cd EvoSynth/dashboard
 npm run dev
 ```
-*Expected Output: `VITE v4.x.x ready in xxx ms` (Available at `http://localhost:5173`)*
+*Expected Output: `VITE ... ready` (Available at `http://localhost:5173`)*
 
 ### Terminal 3: Fire the Engine
-This triggers the UCB1 Multi-Armed Bandit meta-optimizer to begin evaluating XGBoost models.
+This starts the UCB1 Multi-Armed Bandit meta-optimizer on the Covertype dataset.
 ```bash
 cd EvoSynth
 source venv/bin/activate
-python main.py
+evosynth run                       # quick search + refit (200 evaluations)
+evosynth run --full --dataset adult  # 500 evaluations on another dataset
 ```
 
-Once `main.py` is running, open `http://localhost:5173` in your browser. You will instantly see the live telemetry stream populate the glass-box dashboard!
+Once the run starts, open `http://localhost:5173` in your browser to watch the live telemetry stream: islands, scores, promotions, SWAPs and injections.
+
+Every run writes its results to `results/<experiment>/<dataset>/<variant>/seed_<k>/` (settings used, scores, full log). All settings live in the `settings/` folder and can be changed per run, e.g. `evosynth run --set bandit.c=0.2`.

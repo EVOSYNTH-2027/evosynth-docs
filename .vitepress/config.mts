@@ -28,6 +28,8 @@ export default defineConfig({
             { text: "Introduction", link: "/guide/introduction" },
             { text: "System Architecture", link: "/guide/architecture" },
             { text: "Installation", link: "/guide/installation" },
+            { text: "Commands", link: "/guide/commands" },
+            { text: "Results", link: "/guide/results" },
           ],
         },
         {
@@ -52,6 +54,8 @@ export default defineConfig({
             { text: "Introduction", link: "/guide/introduction" },
             { text: "System Architecture", link: "/guide/architecture" },
             { text: "Installation", link: "/guide/installation" },
+            { text: "Commands", link: "/guide/commands" },
+            { text: "Results", link: "/guide/results" },
           ],
         },
         {

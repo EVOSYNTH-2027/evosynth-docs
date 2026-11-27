@@ -2,25 +2,32 @@
 
 The Evaluator layer bridges the gap between the mathematical latent space vectors $[0, 1]$ and actual Machine Learning models.
 
-Every evaluator must inherit from `BaseEvaluator`.
+An evaluator is any object with an `.evaluate(individual)` method that returns a score (higher is better, in %). The engine never needs anything else from it.
 
-## XGBoostEvaluator
+## TabularEvaluator
 
-The default production evaluator included in EvoSynth.
+The default production evaluator included in EvoSynth. It searches over the model family, a feature-engineering strategy and six hyperparameters on any registered tabular dataset.
 
 ### Usage
 ```python
-from automl_engine.core.evaluator import XGBoostEvaluator
+from evosynth.evaluators.tabular import TabularEvaluator
 
-evaluator = XGBoostEvaluator()
+evaluator = TabularEvaluator("covertype")            # or "higgs", "adult", "airlines", ...
+score = evaluator.evaluate(individual)               # mean CV score in %
 ```
 
 ### Internal Mechanics
-When `.evaluate(latent_vector)` is called:
-1. It passes the `latent_vector` to the `ConfigSpace` to decode it into a dictionary of actual hyperparameters (e.g., `{'learning_rate': 0.1, 'max_depth': 6, 'booster': 'gbtree'}`).
-2. It initializes an `xgboost.XGBClassifier` using these parameters.
-3. It performs a 5-fold cross-validation on the built-in Breast Cancer dataset.
-4. It returns the mean accuracy score (a float between `0.0` and `1.0`).
+When `.evaluate(individual)` is called:
+1. It decodes the individual's latent vector with the search space into actual hyperparameters (e.g., `{'model_type': 'LightGBM', 'fe_strategy': 'interactions', 'learning_rate': 0.1, 'max_depth': 6, ...}`).
+2. It runs stratified $k$-fold cross-validation (2 folds by default) on the dataset's **search rows**. The dataset's held-out test rows are never used during search.
+3. In each fold it applies the feature-engineering strategy (fitted on the training fold), builds the model (XGBoost, LightGBM, RandomForest or ExtraTrees), and trains it. Boosted models stop early on a slice of the training fold, never on the fold being scored.
+4. It returns the mean score in the dataset's metric: accuracy for multiclass datasets, ROC AUC for binary ones. A fold whose model fails scores 0, and the failure is logged.
+
+After the search, the best configurations are re-scored with 5-fold cross-validation, and the selected one is retrained on the dataset's training rows and scored once on its held-out test rows.
+
+## ImageCNNEvaluator
+
+Evaluates PyTorch CNN architectures and training hyperparameters on Fashion-MNIST, for neural architecture search (`evosynth nas`).
 
 ## DummyObjectiveFunction
 
@@ -28,12 +35,10 @@ A high-speed synthetic objective function used primarily for testing, debugging,
 
 ### Usage
 ```python
-from automl_engine.core.evaluator import DummyObjectiveFunction
+from evosynth.evaluators.toy import DummyObjectiveFunction
 
 evaluator = DummyObjectiveFunction()
 ```
 
 ### Internal Mechanics
-It implements the classic **Rastrigin Function**—a non-convex function often used as a performance test problem for optimization algorithms because it has a large number of local minima. 
-
-It takes the $[0, 1]$ vector, maps it to $[-5.12, 5.12]$, calculates the Rastrigin score, and normalizes the return value so that finding the global minimum (0) returns a fitness of `1.0`.
+It decodes the vector into a small toy configuration (learning rate, number of layers, optimizer, dropout) and scores how close it is to a hidden "perfect" configuration, returning a mock accuracy of up to 100. It evaluates in microseconds, so the whole engine can be tested in seconds.

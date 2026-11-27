@@ -6,18 +6,18 @@ To solve this, EvoSynth frames the active algorithms as "slot machines" in a **M
 
 ## The UCB1 Formula
 
-For each algorithm $i$, EvoSynth calculates its UCB score at iteration $t$:
+For each algorithm $i$, EvoSynth calculates its UCB score at every scoring call:
 
-$$ UCB_i = \bar{x}_i + c \sqrt{\frac{\ln(t)}{n_i}} $$
+$$ UCB_i = \bar{x}_i + c \sqrt{\frac{\ln(N)}{n_i}} $$
 
 Where:
-- $\bar{x}_i$ is the historical average [Composite Score](./composite-scoring.md) of algorithm $i$.
-- $t$ is the total number of iterations so far.
-- $n_i$ is the number of times algorithm $i$ has been selected.
-- $c$ is the exploration parameter (balancing factor).
+- $\bar{x}_i$ is the current [Composite Score](./composite-scoring.md) of algorithm $i$.
+- $N$ is the total number of evaluations used so far.
+- $n_i$ is the number of evaluations algorithm $i$ has used.
+- $c$ is the exploration parameter ($c = 0.1$ by default).
 
 ## How it Works in EvoSynth
 
-1. **Initialization Phase:** During the first `T1_iters` (e.g., 30 iterations), the bandit is strictly observing the 4 core algorithms (GA, PSO, DE, CMA-ES) in a round-robin or parallel fashion to gather baseline statistics.
-2. **Scoring Phase:** Every $K$ iterations, the `CompositeScoringEngine` computes $\bar{x}_i$ based on the algorithm's fitness, speed, and diversity.
-3. **Action Phase:** The Bandit updates the UCB scores. If a Tier 2 algorithm's UCB score falls significantly behind a Tier 1 algorithm's UCB score (exceeding the `swap_threshold`), the Meta-Engine actively swaps their positions, demoting the loser and promoting the winner.
+1. **Competition Phase:** During the first `t1_iters` iterations, the 4 core algorithms (GA, PSO, DE, CMA-ES) each run on their own Tier 1 island. The bandit then ranks them and promotes the top 2 to Tier 2.
+2. **Scoring Phase:** Every $k$ Tier 2 iterations, the `CompositeScoringEngine` computes $\bar{x}_i$ from each algorithm's fitness, speed, efficiency, diversity and trend.
+3. **Action Phase:** The Bandit updates the UCB scores. If the best Tier 1 algorithm's UCB score is higher than the weakest Tier 2 algorithm's by more than the `swap_margin` (0.10), the Meta-Engine swaps their positions, demoting the loser and promoting the winner. The newcomer must improve the global best within a short grace period, or the swap is rolled back.

@@ -19,6 +19,6 @@ By adapting the covariance matrix, CMA-ES effectively learns the contour map (th
 
 ## The Wrapper Strategy
 
-EvoSynth utilizes the standard `cma` Python library under the hood. However, because the Meta-Engine demands a strict `ask()/tell()` asynchronous interface to allow the UCB1 Bandit to pause and resume algorithms at will, EvoSynth wraps the `cma.CMAEvolutionStrategy` object.
+EvoSynth utilizes the standard `cma` Python library under the hood. Because the Meta-Engine uses a strict `ask()/tell()` interface, EvoSynth wraps the `cma.CMAEvolutionStrategy` object.
 
-The wrapper handles boundary penalties and maintains the distribution state across Tier demotions and promotions seamlessly.
+The wrapper starts the distribution around the island it is given, updates it once per generation with exactly the samples CMA-ES proposed, and keeps every sample inside $[0, 1]$. When the Meta-Engine places new members into the island (elite sharing or diversity injection), the wrapper restarts the distribution around the updated population. All sampling uses EvoSynth's own seeded random generator, so CMA-ES runs are reproducible.

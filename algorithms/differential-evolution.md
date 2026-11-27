@@ -16,7 +16,7 @@ Where $F$ is a scaling factor (typically $0.8$).
 
 ### Crossover
 
-The mutant vector $V_i$ is then crossed with the original target $X_i$ using binomial crossover to create a trial vector $U_i$. If the fitness of $U_i$ is better than $X_i$, it replaces $X_i$ in the next generation.
+The mutant vector $V_i$ is then crossed with the original target $X_i$ using binomial crossover (crossover rate $CR = 0.7$) to create a trial vector $U_i$. If the fitness of $U_i$ is at least as good as that of $X_i$, it replaces $X_i$ in the next generation: each trial competes only with its own target (one-to-one selection). Targets are visited in turn, so the whole population is covered even when the Meta-Engine asks for fewer trials than the population size.
 
 ## Self-Adapting Variance
 

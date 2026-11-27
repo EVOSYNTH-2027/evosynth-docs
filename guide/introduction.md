@@ -20,10 +20,14 @@ Using a **Multi-Armed Bandit (UCB1)** controller, EvoSynth observes the performa
 
 ### Key Innovations
 
-1. **Universal Latent Space:** Hyperparameters are often mixed (learning rate is a float, max depth is an integer, booster type is a categorical string). EvoSynth maps all of these into a unified $[0, 1]$ continuous vector space. This allows purely mathematical algorithms (like Particle Swarm) to fly through categorical dimensions seamlessly.
-2. **Cooperative Co-evolution:** The population of algorithms is divided into a strict hierarchy (Tier 1 and Tier 2). Elite individuals are periodically shared across islands to guarantee global knowledge transfer.
-3. **Glass-Box Telemetry:** Machine learning shouldn't be a black box. EvoSynth streams its internal decision-making process (Bandit UCB scores, algorithm swaps, diversity metrics) to a beautiful React dashboard in real-time via Server-Sent Events (SSE).
+1. **Universal Latent Space:** Hyperparameters are often mixed (learning rate is a float, max depth is an integer, the model family is a categorical string). EvoSynth maps all of these into a unified $[0, 1]$ continuous vector space. This allows purely mathematical algorithms (like Particle Swarm) to fly through categorical dimensions seamlessly.
+2. **Cooperative Co-evolution:** The four algorithms first compete on equal Tier 1 islands; the bandit promotes the best two to larger Tier 2 islands, which periodically trade their elite individuals.
+3. **Robust Selection:** Before the winner is chosen, the top configurations are re-scored with 5-fold cross-validation, then the selected one is retrained and scored once on held-out test data that no search ever saw.
+4. **Real-World Benchmarks:** Seven tabular datasets (Covertype, HIGGS, Adult, Airlines, Poker Hand, MiniBooNE, Jannis) with fixed splits and per-dataset metrics, plus Fashion-MNIST for neural architecture search. Every run is reproducible from one seed.
+5. **Glass-Box Telemetry:** Machine learning shouldn't be a black box. EvoSynth streams its internal decision-making process (Bandit UCB scores, algorithm swaps, diversity metrics) to a beautiful React dashboard in real-time via Server-Sent Events (SSE).
 
 ## Next Steps
 
 To understand how these pieces fit together, check out the [System Architecture](./architecture.md).
+
+For measured results against Random Search, Optuna and FLAML on Covertype and Adult, see [Results](./results.md).
